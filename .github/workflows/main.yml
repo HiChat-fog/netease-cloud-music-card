@@ -21,7 +21,7 @@ jobs:
         run: node index.js
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
-          USER_ID: 309349405
+          USER_ID: 6403910902
           USER_TOKEN: ${{ secrets.USER_TOKEN }}
           REPO: "netease-cloud-music-card"
-          AUTHOR: "JinRudy"
+          AUTHOR: "HiChat-fog"
