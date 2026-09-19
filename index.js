@@ -230,7 +230,7 @@ const {
      `
         ;     
         // console.log(`svgLink : ${svgLink}`)
-        svgContent = Buffer.from(svgLink, 'base64');
+        svgContent = Buffer.from(svgLink).toString('base64');
         // svgContent = btoa(btoa(unescape(encodeURIComponent(svgLink))));
     } catch(err) {
         console.error(`处理 SVG 时发生了错误：${err}`);
