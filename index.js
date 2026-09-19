@@ -249,7 +249,6 @@ const {
             content: svgContent,
             encoding: "base64"
         });
-        console.log(data)
 
         const commits = await octokit.repos.listCommits({
             owner: AUTHOR,
