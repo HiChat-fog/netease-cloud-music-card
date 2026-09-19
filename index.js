@@ -263,7 +263,7 @@ const {
             tree: [
                 {
                     mode: '100644',
-                    path: "card.svg",
+                    path: "music-card.svg",
                     type: "blob",
                     sha: svgSha
                 }
