@@ -239,12 +239,20 @@ const {
     /* ---------- 生成“正在单曲循环”小卡片（README 顶部） ---------- */
     const escapeXml = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;')
         .replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&apos;');
-    const trunc = (s, n) => (s.length > n ? s.slice(0, n) + '…' : s);
+    const trunc = (s, maxEm) => {
+        let w = 0, out = '';
+        for (const ch of s) {
+            w += /[\u1100-\uFFFD\u3000-\u303F]/.test(ch) ? 1 : 0.55;
+            if (w > maxEm) return out + '…';
+            out += ch;
+        }
+        return out;
+    };
     let nowCards = null;
     try {
         const top = content.weekData[0];
-        const nowName = escapeXml(trunc(String(top.song.name), 14));
-        const nowArtist = escapeXml(trunc(top.song.ar.map(i => i.name).join(' / '), 18));
+        const nowName = escapeXml(trunc(String(top.song.name), 15));
+        const nowArtist = escapeXml(trunc(top.song.ar.map(i => i.name).join(' / '), 17));
         const nowCount = top.playCount;
         const nowId = top.song.id + '';
         const nowDetail = await song_detail({
