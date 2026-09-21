@@ -4,15 +4,18 @@ const { user_record, song_detail, user_account, user_subcount, user_playlist } =
 const axios = require('axios').default;
 
 async function getBase64(url) {
-    try{
-        console.log(url);
-        const response = await axios.get(url, { responseType: 'arraybuffer' });
-        return Buffer.from(response.data, 'binary').toString('base64');
-    }catch(e) {
-        console.log(url);
+    let lastErr;
+    for (let i = 0; i < 3; i++) {
+        try {
+            const response = await axios.get(url, { responseType: 'arraybuffer', timeout: 20000 });
+            return Buffer.from(response.data, 'binary').toString('base64');
+        } catch (e) {
+            lastErr = e;
+            console.log(`下载失败(第 ${i + 1} 次):${url}`);
+            await new Promise(r => setTimeout(r, 2000 * (i + 1)));
+        }
     }
-    const response = await axios.get(url, { responseType: 'arraybuffer' });
-    return Buffer.from(response.data, 'binary').toString('base64');
+    throw lastErr;
 }
 
 const {
