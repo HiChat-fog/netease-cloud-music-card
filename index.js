@@ -236,6 +236,69 @@ const {
         console.error(`处理 SVG 时发生了错误：${err}`);
     }
 
+    /* ---------- 生成“正在单曲循环”小卡片（README 顶部） ---------- */
+    const escapeXml = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&apos;');
+    const trunc = (s, n) => (s.length > n ? s.slice(0, n) + '…' : s);
+    let nowCards = null;
+    try {
+        const top = content.weekData[0];
+        const nowName = escapeXml(trunc(String(top.song.name), 14));
+        const nowArtist = escapeXml(trunc(top.song.ar.map(i => i.name).join(' / '), 18));
+        const nowCount = top.playCount;
+        const nowId = top.song.id + '';
+        const nowDetail = await song_detail({
+            cookie: `MUSIC_U=${USER_TOKEN}`,
+            ids: nowId,
+        });
+        const nowCoverB64 = await getBase64(nowDetail.body.songs[0].al.picUrl + "?param=120y120");
+        const updatedAt = new Date(Date.now() + 8 * 3600 * 1000).toISOString().slice(5, 16).replace('T', ' ');
+        const themes = {
+            dark:  { bg: "#0D1117", border: "#21283B", text: "#C9D1D9", muted: "#8B949E", hole: "#0D1117" },
+            light: { bg: "#FFFFFF", border: "#D0D7DE", text: "#24292F", muted: "#57606A", hole: "#FFFFFF" },
+        };
+        const FONT = "'PingFang SC','Microsoft YaHei','Segoe UI',Helvetica,Arial,sans-serif";
+        const eqBars = () => {
+            const base = 82, x0 = 402, seqs = [[8, 24, 12, 26, 8], [12, 18, 26, 10, 12], [6, 14, 22, 16, 6]];
+            let out = '';
+            for (let i = 0; i < 5; i++) {
+                const vals = seqs[i % 3];
+                const dur = (0.8 + i * 0.14).toFixed(2);
+                out += `<rect x="${x0 + i * 9}" y="${base - 12}" width="6" height="12" rx="2" fill="#F724A9">`
+                    + `<animate attributeName="height" values="${vals.join(';')}" dur="${dur}s" repeatCount="indefinite"/>`
+                    + `<animate attributeName="y" values="${vals.map(v => base - v).join(';')}" dur="${dur}s" repeatCount="indefinite"/></rect>`;
+            }
+            return out;
+        };
+        nowCards = {};
+        for (const [variant, t] of Object.entries(themes)) {
+            nowCards[variant] = `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="470" height="110" viewBox="0 0 470 110" role="img">
+  <rect x="0.75" y="0.75" width="468.5" height="108.5" rx="14" fill="${t.bg}" stroke="${t.border}" stroke-width="1.5"/>
+  <g>
+    <animateTransform attributeName="transform" type="rotate" from="0 62 55" to="360 62 55" dur="9s" repeatCount="indefinite"/>
+    <circle cx="62" cy="55" r="42" fill="#141419"/>
+    <circle cx="62" cy="55" r="42" fill="none" stroke="${t.border}" stroke-width="1"/>
+    <circle cx="62" cy="55" r="33" fill="${t.hole}"/>
+    <clipPath id="nowClip${variant}"><circle cx="62" cy="55" r="31"/></clipPath>
+    <image href="data:image/jpeg;base64,${nowCoverB64}" xlink:href="data:image/jpeg;base64,${nowCoverB64}" x="31" y="24" width="62" height="62" clip-path="url(#nowClip${variant})" preserveAspectRatio="xMidYMid slice"/>
+    <circle cx="62" cy="55" r="5" fill="${t.hole}" stroke="#141419" stroke-width="2"/>
+    <path d="M26 42 A40 40 0 0 1 42 24" stroke="#F724A9" stroke-width="2.5" fill="none" stroke-linecap="round" opacity="0.65"/>
+  </g>
+  ${eqBars()}
+  <path d="M212 31 a8 8 0 0 1 16 0" stroke="#F724A9" stroke-width="2" fill="none" stroke-linecap="round"/>
+  <rect x="210" y="30" width="4.5" height="7" rx="2" fill="#F724A9"/>
+  <rect x="225.5" y="30" width="4.5" height="7" rx="2" fill="#F724A9"/>
+  <text x="238" y="38" font-family="${FONT}" font-size="12.5" font-weight="700" fill="#F724A9">正在单曲循环</text>
+  <text x="152" y="60" font-family="${FONT}" font-size="16.5" font-weight="700" fill="${t.text}">${nowName}</text>
+  <text x="152" y="79" font-family="${FONT}" font-size="12.5" fill="${t.muted}">${nowArtist}</text>
+  <text x="152" y="97" font-family="${FONT}" font-size="10.5" fill="${t.muted}" opacity="0.85">本周播放 ${nowCount} 次 · 更新于 ${updatedAt}</text>
+</svg>`;
+        }
+        console.log(`正在听卡片生成成功：${nowName} / ${nowArtist}（本周 ${nowCount} 次）`);
+    } catch (err) {
+        console.error(`生成正在听卡片时发生了错误：${err}`);
+    }
+
     try {
         const octokit = new Octokit({
             auth: GH_TOKEN,
@@ -250,6 +313,31 @@ const {
             encoding: "base64"
         });
 
+        const treeEntries = [
+            {
+                mode: '100644',
+                path: "music-card.svg",
+                type: "blob",
+                sha: svgSha
+            }
+        ];
+        if (nowCards) {
+            for (const [file, text] of [
+                ["music-now-dark.svg", nowCards.dark],
+                ["music-now-light.svg", nowCards.light],
+            ]) {
+                const {
+                    data: { sha: nowSha }
+                } = await octokit.git.createBlob({
+                    owner: AUTHOR,
+                    repo: REPO,
+                    content: Buffer.from(text).toString('base64'),
+                    encoding: "base64"
+                });
+                treeEntries.push({ mode: '100644', path: file, type: "blob", sha: nowSha });
+            }
+        }
+
         const commits = await octokit.repos.listCommits({
             owner: AUTHOR,
             repo: REPO,
@@ -260,14 +348,7 @@ const {
         } =  await octokit.git.createTree({
             owner: AUTHOR,
             repo: REPO,
-            tree: [
-                {
-                    mode: '100644',
-                    path: "music-card.svg",
-                    type: "blob",
-                    sha: svgSha
-                }
-            ],
+            tree: treeEntries,
             base_tree: lastSha,
         });
         const {

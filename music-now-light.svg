@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="470" height="110" viewBox="0 0 470 110" role="img">
+  <rect x="0.75" y="0.75" width="468.5" height="108.5" rx="14" fill="#FFFFFF" stroke="#D0D7DE" stroke-width="1.5"/>
+  <circle cx="62" cy="55" r="42" fill="#141419"/>
+  <circle cx="62" cy="55" r="42" fill="none" stroke="#D0D7DE" stroke-width="1"/>
+  <circle cx="62" cy="55" r="33" fill="#FFFFFF"/>
+  <circle cx="62" cy="55" r="31" fill="#F724A9" opacity="0.22"/>
+  <circle cx="62" cy="55" r="5" fill="#FFFFFF" stroke="#141419" stroke-width="2"/>
+  <path d="M26 42 A40 40 0 0 1 42 24" stroke="#F724A9" stroke-width="2.5" fill="none" stroke-linecap="round" opacity="0.65"/>
+  <path d="M212 31 a8 8 0 0 1 16 0" stroke="#F724A9" stroke-width="2" fill="none" stroke-linecap="round"/>
+  <rect x="210" y="30" width="4.5" height="7" rx="2" fill="#F724A9"/>
+  <rect x="225.5" y="30" width="4.5" height="7" rx="2" fill="#F724A9"/>
+  <text x="238" y="38" font-family="'PingFang SC','Microsoft YaHei','Segoe UI',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="700" fill="#F724A9">正在单曲循环</text>
+  <text x="152" y="60" font-family="'PingFang SC','Microsoft YaHei','Segoe UI',Helvetica,Arial,sans-serif" font-size="16.5" font-weight="700" fill="#24292F">正在同步播放数据…</text>
+  <text x="152" y="79" font-family="'PingFang SC','Microsoft YaHei','Segoe UI',Helvetica,Arial,sans-serif" font-size="12.5" fill="#57606A">网易云 · 每 30 分钟自动刷新</text>
+  <text x="152" y="97" font-family="'PingFang SC','Microsoft YaHei','Segoe UI',Helvetica,Arial,sans-serif" font-size="10.5" fill="#57606A" opacity="0.85">GitHub Actions</text>
+</svg>

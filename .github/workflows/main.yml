@@ -1,8 +1,15 @@
 name: NeteaseMusic
 on:
+  push:
+    branches:
+      - main
+    paths:
+      - "index.js"
+      - "package.json"
+      - ".github/workflows/main.yml"
   workflow_dispatch:
   schedule:
-    - cron: "45 21 * * *" # 每天更新一次(北京时间 05:45)
+    - cron: "*/30 * * * *" # 每 30 分钟刷新卡片（只提交 SVG，不会再自触发）
 
 permissions:
   contents: write
@@ -25,4 +32,6 @@ jobs:
       - name: Purge CDN cache
         run: |
           sleep 15
-          curl -s -X POST "https://purge.jsdelivr.net/gh/HiChat-fog/netease-cloud-music-card@main/music-card.svg" || true
+          for f in music-card.svg music-now-dark.svg music-now-light.svg; do
+            curl -s -X POST "https://purge.jsdelivr.net/gh/HiChat-fog/netease-cloud-music-card@main/$f" || true
+          done
