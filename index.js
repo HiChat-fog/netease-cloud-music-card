@@ -319,7 +319,7 @@ const {
     }
 
     /* ---------- 聚合本周最常听专辑（艺人名含中文视为华语，按需排除） ---------- */
-    const NON_CN_BLOCKLIST = new Set(['twins']); // 英文名的华语艺人,遇到就往这里加
+    const NON_CN_BLOCKLIST = new Set(['twins', "boy'z"]); // 英文名的华语艺人,遇到就往这里加(子串命中)
     try {
         const ids = content.weekData.map(w => w.song.id).join(',');
         const details = await song_detail({ cookie: `MUSIC_U=${USER_TOKEN}`, ids: ids });
@@ -328,7 +328,7 @@ const {
             const d = details.body.songs.find(s => s.id === w.song.id);
             if (!d || !d.al) continue;
             const artists = (d.ar || []).map(a => a.name).join(' / ');
-            if (/[\u4e00-\u9fff]/.test(artists) || NON_CN_BLOCKLIST.has(artists.toLowerCase())) continue;
+            if (/[\u4e00-\u9fff]/.test(artists) || [...NON_CN_BLOCKLIST].some(b => artists.toLowerCase().includes(b))) continue;
             const al = d.al;
             if (!albumMap.has(al.id)) {
                 albumMap.set(al.id, { id: al.id, name: al.name, artist: artists, pic: al.picUrl + '?param=300y300', count: 0 });
