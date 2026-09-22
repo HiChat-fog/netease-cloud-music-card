@@ -252,6 +252,7 @@ const {
         return out;
     };
     let nowCards = null;
+    let nowMeta = null;
     try {
         const top = content.weekData[0];
         const nowName = escapeXml(trunc(String(top.song.name), 15));
@@ -264,6 +265,12 @@ const {
         });
         const nowCoverB64 = await getBase64(nowDetail.body.songs[0].al.picUrl + "?param=120y120");
         const updatedAt = new Date(Date.now() + 8 * 3600 * 1000).toISOString().slice(5, 16).replace('T', ' ');
+        nowMeta = JSON.stringify({
+            id: Number(nowId),
+            name: String(top.song.name),
+            artist: top.song.ar.map(i => i.name).join(' / '),
+            updatedAt: updatedAt,
+        });
         const themes = {
             dark:  { bg: "#0D1117", border: "#21283B", text: "#C9D1D9", muted: "#8B949E", hole: "#0D1117" },
             light: { bg: "#FFFFFF", border: "#D0D7DE", text: "#24292F", muted: "#57606A", hole: "#FFFFFF" },
@@ -347,6 +354,17 @@ const {
                 });
                 treeEntries.push({ mode: '100644', path: file, type: "blob", sha: nowSha });
             }
+        }
+        if (nowMeta) {
+            const {
+                data: { sha: metaSha }
+            } = await octokit.git.createBlob({
+                owner: AUTHOR,
+                repo: REPO,
+                content: Buffer.from(nowMeta).toString('base64'),
+                encoding: "base64"
+            });
+            treeEntries.push({ mode: '100644', path: "now-playing.json", type: "blob", sha: metaSha });
         }
 
         const commits = await octokit.repos.listCommits({
