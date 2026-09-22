@@ -319,12 +319,20 @@ const {
         console.error(`生成正在听卡片时发生了错误：${err}`);
     }
 
-    /* ---------- 聚合最常听专辑（周榜 + 历史总榜；艺人名含中文或命中黑名单视为华语，排除） ---------- */
+    /* ---------- 聚合最常听专辑（周榜 type=1 + 历史总榜 type=0；艺人名含中文或命中黑名单视为华语，排除） ---------- */
     const NON_CN_BLOCKLIST = new Set(['twins', "boy'z"]); // 英文名的华语艺人,遇到就往这里加(子串命中)
     try {
-        const weekIds = content.weekData.map(w => w.song.id);
-        const allIds = content.allTimeData ? content.allTimeData.map(w => w.song.id) : [];
-        const unionIds = [...new Set([...weekIds, ...allIds])].join(',');
+        const weekList = content.weekData || [];
+        let allList = content.allTimeData || [];
+        if (!allList.length) {
+            const recordAll = await user_record({
+                cookie: `MUSIC_U=${USER_TOKEN}`,
+                uid: USER_ID,
+                type: 0,
+            });
+            allList = (recordAll.body && recordAll.body.allTimeData) || [];
+        }
+        const unionIds = [...new Set([...weekList, ...allList].map(w => w.song.id))].join(',');
         const details = await song_detail({ cookie: `MUSIC_U=${USER_TOKEN}`, ids: unionIds });
         const detailById = new Map(details.body.songs.map(s => [s.id, s]));
         const aggregate = (list) => {
@@ -342,9 +350,9 @@ const {
             }
             return [...albumMap.values()].sort((a, b) => b.count - a.count);
         };
-        topAlbums = JSON.stringify(aggregate(content.weekData).slice(0, 8));
+        topAlbums = JSON.stringify(aggregate(weekList).slice(0, 8));
         topAlbumsHistory = JSON.stringify(
-            aggregate(content.allTimeData || []).slice(0, 5).map(function (a) {
+            aggregate(allList).slice(0, 5).map(function (a) {
                 return { id: a.id, name: a.name, artist: a.artist, pic: a.pic };
             })
         );
