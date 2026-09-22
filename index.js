@@ -254,6 +254,7 @@ const {
     let nowCards = null;
     let nowMeta = null;
     let topAlbums = null;
+    let topAlbumsHistory = null;
     try {
         const top = content.weekData[0];
         const nowName = escapeXml(trunc(String(top.song.name), 15));
@@ -318,25 +319,36 @@ const {
         console.error(`生成正在听卡片时发生了错误：${err}`);
     }
 
-    /* ---------- 聚合本周最常听专辑（艺人名含中文视为华语，按需排除） ---------- */
+    /* ---------- 聚合最常听专辑（周榜 + 历史总榜；艺人名含中文或命中黑名单视为华语，排除） ---------- */
     const NON_CN_BLOCKLIST = new Set(['twins', "boy'z"]); // 英文名的华语艺人,遇到就往这里加(子串命中)
     try {
-        const ids = content.weekData.map(w => w.song.id).join(',');
-        const details = await song_detail({ cookie: `MUSIC_U=${USER_TOKEN}`, ids: ids });
-        const albumMap = new Map();
-        for (const w of content.weekData) {
-            const d = details.body.songs.find(s => s.id === w.song.id);
-            if (!d || !d.al) continue;
-            const artists = (d.ar || []).map(a => a.name).join(' / ');
-            if (/[\u4e00-\u9fff]/.test(artists) || [...NON_CN_BLOCKLIST].some(b => artists.toLowerCase().includes(b))) continue;
-            const al = d.al;
-            if (!albumMap.has(al.id)) {
-                albumMap.set(al.id, { id: al.id, name: al.name, artist: artists, pic: al.picUrl + '?param=300y300', count: 0 });
+        const weekIds = content.weekData.map(w => w.song.id);
+        const allIds = content.allTimeData ? content.allTimeData.map(w => w.song.id) : [];
+        const unionIds = [...new Set([...weekIds, ...allIds])].join(',');
+        const details = await song_detail({ cookie: `MUSIC_U=${USER_TOKEN}`, ids: unionIds });
+        const detailById = new Map(details.body.songs.map(s => [s.id, s]));
+        const aggregate = (list) => {
+            const albumMap = new Map();
+            for (const w of list) {
+                const d = detailById.get(w.song.id);
+                if (!d || !d.al) continue;
+                const artists = (d.ar || []).map(a => a.name).join(' / ');
+                if (/[\u4e00-\u9fff]/.test(artists) || [...NON_CN_BLOCKLIST].some(b => artists.toLowerCase().includes(b))) continue;
+                const al = d.al;
+                if (!albumMap.has(al.id)) {
+                    albumMap.set(al.id, { id: al.id, name: al.name, artist: artists, pic: al.picUrl + '?param=300y300', count: 0 });
+                }
+                albumMap.get(al.id).count += w.playCount;
             }
-            albumMap.get(al.id).count += w.playCount;
-        }
-        topAlbums = JSON.stringify([...albumMap.values()].sort((a, b) => b.count - a.count).slice(0, 8));
-        console.log(`专辑聚合完成：${albumMap.size} 张（排除华语后取前 8）`);
+            return [...albumMap.values()].sort((a, b) => b.count - a.count);
+        };
+        topAlbums = JSON.stringify(aggregate(content.weekData).slice(0, 8));
+        topAlbumsHistory = JSON.stringify(
+            aggregate(content.allTimeData || []).slice(0, 5).map(function (a) {
+                return { id: a.id, name: a.name, artist: a.artist, pic: a.pic };
+            })
+        );
+        console.log(`专辑聚合完成：本周 ${JSON.parse(topAlbums).length} 张 / 历史 ${JSON.parse(topAlbumsHistory).length} 张`);
     } catch (err) {
         console.error(`聚合专辑时发生了错误：${err}`);
     }
@@ -400,6 +412,17 @@ const {
                 encoding: "base64"
             });
             treeEntries.push({ mode: '100644', path: "top-albums.json", type: "blob", sha: albumsSha });
+        }
+        if (topAlbumsHistory) {
+            const {
+                data: { sha: historySha }
+            } = await octokit.git.createBlob({
+                owner: AUTHOR,
+                repo: REPO,
+                content: Buffer.from(topAlbumsHistory).toString('base64'),
+                encoding: "base64"
+            });
+            treeEntries.push({ mode: '100644', path: "top-albums-history.json", type: "blob", sha: historySha });
         }
 
         const commits = await octokit.repos.listCommits({

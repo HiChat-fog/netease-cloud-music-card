@@ -32,6 +32,6 @@ jobs:
       - name: Purge CDN cache
         run: |
           sleep 15
-          for f in music-card.svg music-now-dark.svg music-now-light.svg now-playing.json top-albums.json; do
+          for f in music-card.svg music-now-dark.svg music-now-light.svg now-playing.json top-albums.json top-albums-history.json; do
             curl -s -X POST "https://purge.jsdelivr.net/gh/HiChat-fog/netease-cloud-music-card@main/$f" || true
           done
