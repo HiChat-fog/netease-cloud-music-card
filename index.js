@@ -353,12 +353,20 @@ const {
             }
             return [...albumMap.values()].sort((a, b) => b.count - a.count);
         };
-        topAlbums = JSON.stringify(aggregate(weekList).slice(0, 8));
-        topAlbumsHistory = JSON.stringify(
-            aggregate(allList).slice(0, 5).map(function (a) {
+        const weeklyAgg = aggregate(weekList).slice(0, 8);
+        const historyAgg = aggregate(allList).slice(0, 5);
+        if (weeklyAgg.length) {
+            topAlbums = JSON.stringify(weeklyAgg);
+        } else {
+            console.warn('本周聚合为空,保留上一次的数据不覆盖');
+        }
+        if (historyAgg.length) {
+            topAlbumsHistory = JSON.stringify(historyAgg.map(function (a) {
                 return { id: a.id, name: a.name, artist: a.artist, pic: a.pic };
-            })
-        );
+            }));
+        } else {
+            console.warn('历史聚合为空,保留上一次的数据不覆盖');
+        }
         console.log(`专辑聚合完成：本周 ${JSON.parse(topAlbums).length} 张 / 历史 ${JSON.parse(topAlbumsHistory).length} 张`);
     } catch (err) {
         console.error(`聚合专辑时发生了错误：${err}`);
