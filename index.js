@@ -272,17 +272,17 @@ const {
             updatedAt: updatedAt,
         });
         const themes = {
-            dark:  { bg: "#0D1117", border: "#21283B", text: "#C9D1D9", muted: "#8B949E", hole: "#0D1117" },
-            light: { bg: "#FFFFFF", border: "#D0D7DE", text: "#24292F", muted: "#57606A", hole: "#FFFFFF" },
+            dark:  { bg: "#0D1117", border: "#21283B", text: "#C9D1D9", muted: "#8B949E", hole: "#0D1117", accent: "#C79FD4" },
+            light: { bg: "#FFFFFF", border: "#D0D7DE", text: "#24292F", muted: "#57606A", hole: "#FFFFFF", accent: "#B385BE" },
         };
         const FONT = "'PingFang SC','Microsoft YaHei','Segoe UI',Helvetica,Arial,sans-serif";
-        const eqBars = () => {
+        const eqBars = (accent) => {
             const base = 82, x0 = 402, seqs = [[8, 24, 12, 26, 8], [12, 18, 26, 10, 12], [6, 14, 22, 16, 6]];
             let out = '';
             for (let i = 0; i < 5; i++) {
                 const vals = seqs[i % 3];
                 const dur = (0.8 + i * 0.14).toFixed(2);
-                out += `<rect x="${x0 + i * 9}" y="${base - 12}" width="6" height="12" rx="2" fill="#F724A9">`
+                out += `<rect x="${x0 + i * 9}" y="${base - 12}" width="6" height="12" rx="2" fill="${accent}">`
                     + `<animate attributeName="height" values="${vals.join(';')}" dur="${dur}s" repeatCount="indefinite"/>`
                     + `<animate attributeName="y" values="${vals.map(v => base - v).join(';')}" dur="${dur}s" repeatCount="indefinite"/></rect>`;
             }
@@ -300,13 +300,13 @@ const {
     <clipPath id="nowClip${variant}"><circle cx="62" cy="55" r="31"/></clipPath>
     <image href="data:image/jpeg;base64,${nowCoverB64}" xlink:href="data:image/jpeg;base64,${nowCoverB64}" x="31" y="24" width="62" height="62" clip-path="url(#nowClip${variant})" preserveAspectRatio="xMidYMid slice"/>
     <circle cx="62" cy="55" r="5" fill="${t.hole}" stroke="#141419" stroke-width="2"/>
-    <path d="M26 42 A40 40 0 0 1 42 24" stroke="#F724A9" stroke-width="2.5" fill="none" stroke-linecap="round" opacity="0.65"/>
+    <path d="M26 42 A40 40 0 0 1 42 24" stroke="${t.accent}" stroke-width="2.5" fill="none" stroke-linecap="round" opacity="0.65"/>
   </g>
-  ${eqBars()}
-  <path d="M212 31 a8 8 0 0 1 16 0" stroke="#F724A9" stroke-width="2" fill="none" stroke-linecap="round"/>
-  <rect x="210" y="30" width="4.5" height="7" rx="2" fill="#F724A9"/>
-  <rect x="225.5" y="30" width="4.5" height="7" rx="2" fill="#F724A9"/>
-  <text x="238" y="38" font-family="${FONT}" font-size="12.5" font-weight="700" fill="#F724A9">正在单曲循环</text>
+  ${eqBars(t.accent)}
+  <path d="M212 31 a8 8 0 0 1 16 0" stroke="${t.accent}" stroke-width="2" fill="none" stroke-linecap="round"/>
+  <rect x="210" y="30" width="4.5" height="7" rx="2" fill="${t.accent}"/>
+  <rect x="225.5" y="30" width="4.5" height="7" rx="2" fill="${t.accent}"/>
+  <text x="238" y="38" font-family="${FONT}" font-size="12.5" font-weight="700" fill="${t.accent}">正在单曲循环</text>
   <text x="152" y="60" font-family="${FONT}" font-size="16.5" font-weight="700" fill="${t.text}">${nowName}</text>
   <text x="152" y="79" font-family="${FONT}" font-size="12.5" fill="${t.muted}">${nowArtist}</text>
   <text x="152" y="97" font-family="${FONT}" font-size="10.5" fill="${t.muted}" opacity="0.85">本周播放 ${nowCount} 次 · 更新于 ${updatedAt}</text>
