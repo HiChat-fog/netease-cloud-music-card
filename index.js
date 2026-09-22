@@ -324,18 +324,16 @@ const {
     try {
         const weekList = content.weekData || [];
         let allList = content.allTimeData || [];
-        let recordAllDebug = null;
         if (!allList.length) {
             const recordAll = await user_record({
                 cookie: `MUSIC_U=${USER_TOKEN}`,
                 uid: USER_ID,
                 type: 0,
             }).catch(function (e) {
-                recordAllDebug = { body: { error: String(e).slice(0, 200) } };
+                console.error(`获取历史总榜失败:${e}`);
                 return null;
             });
-            recordAllDebug = recordAll;
-            allList = (recordAll && recordAll.body && recordAll.body.allTimeData) || [];
+            allList = (recordAll && recordAll.body && (recordAll.body.allData || recordAll.body.allTimeData)) || [];
         }
         const unionIds = [...new Set([...weekList, ...allList].map(w => w.song.id))].join(',');
         const details = await song_detail({ cookie: `MUSIC_U=${USER_TOKEN}`, ids: unionIds });
@@ -361,18 +359,6 @@ const {
                 return { id: a.id, name: a.name, artist: a.artist, pic: a.pic };
             })
         );
-        if (aggregate(allList).length === 0) {
-            topAlbumsHistory = JSON.stringify({
-                debug: {
-                    contentKeys: Object.keys(content || {}),
-                    contentAllTimeType: Array.isArray(content.allTimeData) ? 'array(' + content.allTimeData.length + ')' : typeof content.allTimeData,
-                    allListLen: allList.length,
-                    recordAllType: typeof recordAllDebug,
-                    recordAllKeys: recordAllDebug && recordAllDebug.body ? Object.keys(recordAllDebug.body) : null,
-                    recordAllSample: recordAllDebug && recordAllDebug.body ? JSON.stringify(recordAllDebug.body).slice(0, 300) : null,
-                },
-            });
-        }
         console.log(`专辑聚合完成：本周 ${JSON.parse(topAlbums).length} 张 / 历史 ${JSON.parse(topAlbumsHistory).length} 张`);
     } catch (err) {
         console.error(`聚合专辑时发生了错误：${err}`);
