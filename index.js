@@ -253,6 +253,7 @@ const {
     };
     let nowCards = null;
     let nowMeta = null;
+    let topAlbums = null;
     try {
         const top = content.weekData[0];
         const nowName = escapeXml(trunc(String(top.song.name), 15));
@@ -317,6 +318,28 @@ const {
         console.error(`生成正在听卡片时发生了错误：${err}`);
     }
 
+    /* ---------- 聚合本周最常听专辑（艺人名含中文视为华语，按需排除） ---------- */
+    try {
+        const ids = content.weekData.map(w => w.song.id).join(',');
+        const details = await song_detail({ cookie: `MUSIC_U=${USER_TOKEN}`, ids: ids });
+        const albumMap = new Map();
+        for (const w of content.weekData) {
+            const d = details.body.songs.find(s => s.id === w.song.id);
+            if (!d || !d.al) continue;
+            const artists = (d.ar || []).map(a => a.name).join(' / ');
+            if (/[\u4e00-\u9fff]/.test(artists)) continue;
+            const al = d.al;
+            if (!albumMap.has(al.id)) {
+                albumMap.set(al.id, { id: al.id, name: al.name, artist: artists, pic: al.picUrl + '?param=300y300', count: 0 });
+            }
+            albumMap.get(al.id).count += w.playCount;
+        }
+        topAlbums = JSON.stringify([...albumMap.values()].sort((a, b) => b.count - a.count).slice(0, 8));
+        console.log(`专辑聚合完成：${albumMap.size} 张（排除华语后取前 8）`);
+    } catch (err) {
+        console.error(`聚合专辑时发生了错误：${err}`);
+    }
+
     try {
         const octokit = new Octokit({
             auth: GH_TOKEN,
@@ -365,6 +388,17 @@ const {
                 encoding: "base64"
             });
             treeEntries.push({ mode: '100644', path: "now-playing.json", type: "blob", sha: metaSha });
+        }
+        if (topAlbums) {
+            const {
+                data: { sha: albumsSha }
+            } = await octokit.git.createBlob({
+                owner: AUTHOR,
+                repo: REPO,
+                content: Buffer.from(topAlbums).toString('base64'),
+                encoding: "base64"
+            });
+            treeEntries.push({ mode: '100644', path: "top-albums.json", type: "blob", sha: albumsSha });
         }
 
         const commits = await octokit.repos.listCommits({
