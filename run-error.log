@@ -1,0 +1,4 @@
+run failed at Fri Oct 23 00:20:06 UTC 2026
+```
+登录态失效：MUSIC_U cookie 无效或已过期，请到仓库 Settings -> Secrets -> USER_TOKEN 更新为新的 MUSIC_U 值
+```
