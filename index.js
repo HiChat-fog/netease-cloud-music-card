@@ -30,6 +30,10 @@ const {
     const account = await user_account({
         cookie: `MUSIC_U=${USER_TOKEN}`,
     })
+    if (!account.body || !account.body.profile) {
+        console.error('登录态失效：MUSIC_U cookie 无效或已过期，请到仓库 Settings -> Secrets -> USER_TOKEN 更新为新的 MUSIC_U 值');
+        process.exit(1);
+    }
     const username = account.body.profile.nickname;
     const avatarUrl = account.body.profile.avatarUrl + "?param=128y128"; // 压缩
     console.log(`用户名：${username}\n \n个人头像: ${avatarUrl}\n`);
