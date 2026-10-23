@@ -22,13 +22,29 @@ jobs:
       - name: Setup
         run: npm install
       - name: index.js
-        run: node index.js
+        run: |
+          set -o pipefail
+          node index.js 2>&1 | tee run.log
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
           USER_ID: 6403910902
           USER_TOKEN: ${{ secrets.USER_TOKEN }}
           REPO: "netease-cloud-music-card"
           AUTHOR: "HiChat-fog"
+      - name: Save run log on failure
+        if: failure()
+        run: |
+          mkdir -p /tmp/logpush && cd /tmp/logpush
+          git init -q -b logs
+          {
+            echo "run failed at $(date -u)"
+            echo '```'
+            tail -50 "$GITHUB_WORKSPACE/run.log" 2>/dev/null
+            echo '```'
+          } > run-error.log
+          git add -A
+          git -c user.name=build-bot -c user.email=bot@users.noreply.github.com commit -qm "netease run error log"
+          git push -qf "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/HiChat-fog/netease-cloud-music-card.git" HEAD:logs
       - name: Purge CDN cache
         run: |
           sleep 15
